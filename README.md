@@ -1,3 +1,8 @@
+## Watch the video
+
+[![Watch The Video](https://img.youtube.com/vi/cPmEKW6hQlM/0.jpg)](https://www.youtube.com/watch?v=cPmEKW6hQlME)
+
+
 ## Parts List
 
 | Part | Quantity     | Link |
