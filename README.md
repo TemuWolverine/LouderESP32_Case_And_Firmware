@@ -6,9 +6,12 @@
 To make things as easy as possible, the case files are available in all your favourite flavours, including the original F360 file for editing.
 
 * [3MF on Makerworld](https://makerworld.com/en/models/3158598-louder-esp32-steaming-case)
-* [Fusion 360 archive](CAD/LouderESP32%20Case.f3z)
-* [STEP](CAD/LouderESP32%20Case.step)
-* [STLs](CAD/LouderESP32%20Case_STL.zip)
+* [Fusion 360 archive](
+https://github.com/TemuWolverine/LouderESP32_Case_And_Firmware/raw/refs/heads/main/CAD/LouderESP32%20Case.f3z)
+* [STEP](
+https://github.com/TemuWolverine/LouderESP32_Case_And_Firmware/raw/refs/heads/main/CAD/LouderESP32%20Case.step)
+* [STLs](
+https://github.com/TemuWolverine/LouderESP32_Case_And_Firmware/raw/refs/heads/main/CAD/LouderESP32%20Case_STL.zip)
 
 ## Parts List
 
