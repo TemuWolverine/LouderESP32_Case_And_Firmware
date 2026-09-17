@@ -223,7 +223,26 @@ sensor:
     - media_player.volume_set:
         id: external_media_player
         volume: !lambda "return id(current_volume);"
-        
+
+- platform: template
+  id: media_player_volume_sync
+  internal: true
+  update_interval: 100ms
+  accuracy_decimals: 2
+
+  lambda: |-
+    return id(external_media_player).volume;
+
+  filters:
+    - delta: 0.001
+
+  on_value:
+    then:
+      - lambda: |-
+          id(current_volume) = x;
+
+      - script.execute: update_volume_leds 
+           
 # ===== Packages =====
 packages:
   esparagus_remote:
