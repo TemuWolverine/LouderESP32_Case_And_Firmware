@@ -159,7 +159,46 @@ interval:
             - lambda: |-
                 id(last_volume) = id(current_volume);
             - script.execute: update_volume_leds
-                        
+
+
+# ============================================================
+# Rotary encoder button: 
+#   Single Click: Play/Pause
+#   Double Click: Next Track
+# ============================================================
+
+binary_sensor:
+  - platform: gpio
+    name: "Rotary Button"
+  
+    pin:
+      number: ${rotary_pin_button}
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+  
+    filters:
+      - delayed_on_off: 20ms
+        
+    on_multi_click:
+    - timing:
+        - ON for at most 1s
+        - OFF for at most 1s
+        - ON for at most 1s
+        - OFF for at least 0.2s
+      then:
+        - media_player.next:
+            id: external_media_player
+        - logger.log: "Double-Clicked"
+    - timing:
+        - ON for at most 1s
+        - OFF for at least 0.5s
+      then:
+        - media_player.toggle:
+            id: external_media_player
+        - logger.log: "Single-Clicked"
+
 sensor:
 - platform: rotary_encoder
   name: "Rotary Encoder"
