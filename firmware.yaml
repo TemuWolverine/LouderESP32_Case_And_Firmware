@@ -114,6 +114,7 @@ network:
 light:
   - platform: esp32_rmt_led_strip
     name: volumeLED
+    internal: true
     rgb_order: GRB
     chipset: WS2812
     pin: ${volume_led_pin}
@@ -126,15 +127,195 @@ light:
           name: "Volume Display"
           update_interval: 50ms
           lambda: |-
+            float sr, sg, sb;
+            float wr, wg, wb;
+            float dr, dg, db;
+            
+            id(safe_colour).current_values_as_rgb(&sr, &sg, &sb);
+            id(warning_colour).current_values_as_rgb(&wr, &wg, &wb);
+            id(danger_colour).current_values_as_rgb(&dr, &dg, &db);
+            
+            Color safe(
+              uint8_t(sr * 255),
+              uint8_t(sg * 255),
+              uint8_t(sb * 255)
+            );
+            
+            Color warning(
+              uint8_t(wr * 255),
+              uint8_t(wg * 255),
+              uint8_t(wb * 255)
+            );
+            
+            Color danger(
+              uint8_t(dr * 255),
+              uint8_t(dg * 255),
+              uint8_t(db * 255)
+            );
+                      
             int leds = (int) ceil(id(current_volume) * 5.0f);
-
+          
             for (int i = 0; i < 5; i++) {
+              int index = 4 - i;
+          
               if (i < leds) {
-                it[i] = Color(0, 255, 0);
+                  if (i < 3) {
+                    it[index] = safe;
+                  } else if (i == 3) {
+                    it[index] = warning;
+                  } else {
+                    it[index] = danger;
+                  }
               } else {
-                it[i] = Color(0, 0, 0);
+                it[index] = Color(0, 0, 0);
               }
             }
+
+# SAFE - green
+  - platform: rgb
+    id: safe_colour
+    name: "Safe Colour"
+
+    red: safe_red
+    green: safe_green
+    blue: safe_blue
+
+    gamma_correct: 1.0
+    default_transition_length: 0s
+    restore_mode: RESTORE_DEFAULT_ON
+
+    initial_state:
+      state: true
+      brightness: 100%
+      red: 0%
+      green: 100%
+      blue: 0%
+
+    on_turn_off:
+      - light.turn_on:
+          id: safe_colour
+          brightness: 100%
+
+
+# WARNING - amber
+  - platform: rgb
+    id: warning_colour
+    name: "Warning Colour"
+
+    red: warning_red
+    green: warning_green
+    blue: warning_blue
+
+    gamma_correct: 1.0
+    default_transition_length: 0s
+    restore_mode: RESTORE_DEFAULT_ON
+
+    initial_state:
+      state: true
+      brightness: 100%
+      red: 100%
+      green: 75%
+      blue: 0%
+
+    on_turn_off:
+      - light.turn_on:
+          id: warning_colour
+          brightness: 100%
+
+
+# DANGER - red
+  - platform: rgb
+    id: danger_colour
+    name: "Danger Colour"
+
+    red: danger_red
+    green: danger_green
+    blue: danger_blue
+
+    gamma_correct: 1.0
+    default_transition_length: 0s
+    restore_mode: RESTORE_DEFAULT_ON
+
+    initial_state:
+      state: true
+      brightness: 100%
+      red: 100%
+      green: 0%
+      blue: 0%
+
+    on_turn_off:
+      - light.turn_on:
+          id: danger_colour
+          brightness: 100%
+          
+output:
+  # SAFE
+  - platform: template
+    id: safe_red
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+  - platform: template
+    id: safe_green
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+  - platform: template
+    id: safe_blue
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+
+  # WARNING
+  - platform: template
+    id: warning_red
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+  - platform: template
+    id: warning_green
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+  - platform: template
+    id: warning_blue
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+
+  # DANGER
+  - platform: template
+    id: danger_red
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+  - platform: template
+    id: danger_green
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+  - platform: template
+    id: danger_blue
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
 
 globals:
   - id: last_volume
@@ -143,10 +324,29 @@ globals:
 
 script:
   - id: update_volume_leds
+    mode: restart
+
     then:
       - light.turn_on:
           id: volumeled
           effect: "Volume Display"
+
+      - if:
+          condition:
+            switch.is_on: auto_hide_volume_leds
+          then:
+            - delay: 2s
+
+            - light.turn_off:
+                id: volumeled
+                transition_length: 0s
+switch:
+  - platform: template
+    name: "Auto-hide Volume LEDs"
+    id: auto_hide_volume_leds
+    icon: "mdi:timer-off-outline"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
 
 interval:
   - interval: 50ms
@@ -159,7 +359,46 @@ interval:
             - lambda: |-
                 id(last_volume) = id(current_volume);
             - script.execute: update_volume_leds
-                        
+
+
+# ============================================================
+# Rotary encoder button: 
+#   Single Click: Play/Pause
+#   Double Click: Next Track
+# ============================================================
+
+binary_sensor:
+  - platform: gpio
+    name: "Rotary Button"
+  
+    pin:
+      number: ${rotary_pin_button}
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+  
+    filters:
+      - delayed_on_off: 20ms
+        
+    on_multi_click:
+    - timing:
+        - ON for at most 1s
+        - OFF for at most 1s
+        - ON for at most 1s
+        - OFF for at least 0.2s
+      then:
+        - media_player.next:
+            id: external_media_player
+        - logger.log: "Double-Clicked"
+    - timing:
+        - ON for at most 1s
+        - OFF for at least 0.5s
+      then:
+        - media_player.toggle:
+            id: external_media_player
+        - logger.log: "Single-Clicked"
+
 sensor:
 - platform: rotary_encoder
   name: "Rotary Encoder"
@@ -184,7 +423,26 @@ sensor:
     - media_player.volume_set:
         id: external_media_player
         volume: !lambda "return id(current_volume);"
-        
+
+- platform: template
+  id: media_player_volume_sync
+  internal: true
+  update_interval: 100ms
+  accuracy_decimals: 2
+
+  lambda: |-
+    return id(external_media_player).volume;
+
+  filters:
+    - delta: 0.001
+
+  on_value:
+    then:
+      - lambda: |-
+          id(current_volume) = x;
+
+      - script.execute: update_volume_leds 
+           
 # ===== Packages =====
 packages:
   esparagus_remote:
