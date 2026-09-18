@@ -126,22 +126,195 @@ light:
           name: "Volume Display"
           update_interval: 50ms
           lambda: |-
+            float sr, sg, sb;
+            float wr, wg, wb;
+            float dr, dg, db;
+            
+            id(safe_colour).current_values_as_rgb(&sr, &sg, &sb);
+            id(warning_colour).current_values_as_rgb(&wr, &wg, &wb);
+            id(danger_colour).current_values_as_rgb(&dr, &dg, &db);
+            
+            Color safe(
+              uint8_t(sr * 255),
+              uint8_t(sg * 255),
+              uint8_t(sb * 255)
+            );
+            
+            Color warning(
+              uint8_t(wr * 255),
+              uint8_t(wg * 255),
+              uint8_t(wb * 255)
+            );
+            
+            Color danger(
+              uint8_t(dr * 255),
+              uint8_t(dg * 255),
+              uint8_t(db * 255)
+            );
+                      
             int leds = (int) ceil(id(current_volume) * 5.0f);
-
+          
             for (int i = 0; i < 5; i++) {
+              int index = 4 - i;
+          
               if (i < leds) {
                   if (i < 3) {
-                    it[index] = Color(0, 255, 0);
+                    it[index] = safe;
                   } else if (i == 3) {
-                    it[index] = Color(255, 76, 0);
+                    it[index] = warning;
                   } else {
-                    it[index] = Color(255, 0, 0);
+                    it[index] = danger;
                   }
               } else {
                 it[index] = Color(0, 0, 0);
               }
             }
 
+# SAFE - green
+  - platform: rgb
+    id: safe_colour
+    name: "Safe Colour"
+
+    red: safe_red
+    green: safe_green
+    blue: safe_blue
+
+    gamma_correct: 1.0
+    default_transition_length: 0s
+    restore_mode: RESTORE_DEFAULT_ON
+
+    initial_state:
+      state: true
+      brightness: 100%
+      red: 0%
+      green: 100%
+      blue: 0%
+
+    on_turn_off:
+      - light.turn_on:
+          id: safe_colour
+          brightness: 100%
+
+
+# WARNING - amber
+  - platform: rgb
+    id: warning_colour
+    name: "Warning Colour"
+
+    red: warning_red
+    green: warning_green
+    blue: warning_blue
+
+    gamma_correct: 1.0
+    default_transition_length: 0s
+    restore_mode: RESTORE_DEFAULT_ON
+
+    initial_state:
+      state: true
+      brightness: 100%
+      red: 100%
+      green: 75%
+      blue: 0%
+
+    on_turn_off:
+      - light.turn_on:
+          id: warning_colour
+          brightness: 100%
+
+
+# DANGER - red
+  - platform: rgb
+    id: danger_colour
+    name: "Danger Colour"
+
+    red: danger_red
+    green: danger_green
+    blue: danger_blue
+
+    gamma_correct: 1.0
+    default_transition_length: 0s
+    restore_mode: RESTORE_DEFAULT_ON
+
+    initial_state:
+      state: true
+      brightness: 100%
+      red: 100%
+      green: 0%
+      blue: 0%
+
+    on_turn_off:
+      - light.turn_on:
+          id: danger_colour
+          brightness: 100%
+          
+output:
+  # SAFE
+  - platform: template
+    id: safe_red
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+  - platform: template
+    id: safe_green
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+  - platform: template
+    id: safe_blue
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+
+  # WARNING
+  - platform: template
+    id: warning_red
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+  - platform: template
+    id: warning_green
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+  - platform: template
+    id: warning_blue
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+
+  # DANGER
+  - platform: template
+    id: danger_red
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+  - platform: template
+    id: danger_green
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
+
+  - platform: template
+    id: danger_blue
+    type: float
+    write_action:
+      - lambda: |-
+          // Virtual output only
 
 globals:
   - id: last_volume
