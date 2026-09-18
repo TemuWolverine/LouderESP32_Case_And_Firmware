@@ -114,6 +114,7 @@ network:
 light:
   - platform: esp32_rmt_led_strip
     name: volumeLED
+    internal: true
     rgb_order: GRB
     chipset: WS2812
     pin: ${volume_led_pin}
@@ -323,10 +324,29 @@ globals:
 
 script:
   - id: update_volume_leds
+    mode: restart
+
     then:
       - light.turn_on:
           id: volumeled
           effect: "Volume Display"
+
+      - if:
+          condition:
+            switch.is_on: auto_hide_volume_leds
+          then:
+            - delay: 2s
+
+            - light.turn_off:
+                id: volumeled
+                transition_length: 0s
+switch:
+  - platform: template
+    name: "Auto-hide Volume LEDs"
+    id: auto_hide_volume_leds
+    icon: "mdi:timer-off-outline"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
 
 interval:
   - interval: 50ms
